@@ -31,252 +31,259 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
-  final _key = GlobalKey<GoogleMapStateBase>();
-  bool _polygonAdded = false;
-  bool _darkMapStyle = false;
-  String _mapStyle;
-
-  List<Widget> _buildClearButtons() => [
-        RaisedButton.icon(
-          color: Colors.red,
-          textColor: Colors.white,
-          icon: Icon(Icons.bubble_chart),
-          label: Text('CLEAR POLYGONS'),
-          onPressed: () {
-            GoogleMap.of(_key).clearPolygons();
-            setState(() => _polygonAdded = false);
-          },
-        ),
-        const SizedBox(width: 16),
-        RaisedButton.icon(
-          color: Colors.red,
-          textColor: Colors.white,
-          icon: Icon(Icons.pin_drop),
-          label: Text('CLEAR MARKERS'),
-          onPressed: () {
-            GoogleMap.of(_key).clearMarkers();
-          },
-        ),
-        const SizedBox(width: 16),
-        RaisedButton.icon(
-          color: Colors.red,
-          textColor: Colors.white,
-          icon: Icon(Icons.directions),
-          label: Text('CLEAR DIRECTIONS'),
-          onPressed: () {
-            GoogleMap.of(_key).clearDirections();
-          },
-        ),
-      ];
-
-  List<Widget> _buildAddButtons() => [
-        FloatingActionButton(
-          child: Icon(_polygonAdded ? Icons.edit : Icons.bubble_chart),
-          backgroundColor: _polygonAdded ? Colors.orange : null,
-          onPressed: () {
-            if (!_polygonAdded) {
-              GoogleMap.of(_key).addPolygon(
-                '1',
-                polygon,
-                onTap: (polygonId) async {
-                  await showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      content: Text(
-                        'This dialog was opened by tapping on the polygon!\n'
-                        'Polygon ID is $polygonId',
-                      ),
-                      actions: <Widget>[
-                        FlatButton(
-                          onPressed: Navigator.of(context).pop,
-                          child: Text('CLOSE'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            } else {
-              GoogleMap.of(_key).editPolygon(
-                '1',
-                polygon,
-                fillColor: Colors.purple,
-                strokeColor: Colors.purple,
-              );
-            }
-
-            setState(() => _polygonAdded = true);
-          },
-        ),
-        const SizedBox(width: 16),
-        FloatingActionButton(
-          child: Icon(Icons.pin_drop),
-          onPressed: () {
-            GoogleMap.of(_key).addMarkerRaw(
-              GeoCoord(33.875513, -117.550257),
-              info: 'test info',
-              onInfoWindowTap: () async {
-                await showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    content: Text(
-                        'This dialog was opened by tapping on the InfoWindow!'),
-                    actions: <Widget>[
-                      FlatButton(
-                        onPressed: Navigator.of(context).pop,
-                        child: Text('CLOSE'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-            GoogleMap.of(_key).addMarkerRaw(
-              GeoCoord(33.775513, -117.450257),
-              icon: 'assets/images/map-marker-warehouse.png',
-              info: contentString,
-            );
-          },
-        ),
-        const SizedBox(width: 16),
-        FloatingActionButton(
-          child: Icon(Icons.directions),
-          onPressed: () {
-            GoogleMap.of(_key).addDirection(
-              'San Francisco, CA',
-              'San Jose, CA',
-              startLabel: '1',
-              startInfo: 'San Francisco, CA',
-              endIcon: 'assets/images/map-marker-warehouse.png',
-              endInfo: 'San Jose, CA',
-            );
-          },
-        ),
-      ];
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        key: _scaffoldKey,
-        appBar: AppBar(
-          title: Text('Google Map'),
-        ),
-        body: Stack(
-          children: <Widget>[
-            Positioned.fill(
-              child: GoogleMap(
-                key: _key,
-                markers: {
-                  Marker(
-                    GeoCoord(34.0469058, -118.3503948),
-                  ),
-                },
-                initialZoom: 12,
-                initialPosition:
-                    GeoCoord(34.0469058, -118.3503948), // Los Angeles, CA
-                mapType: MapType.roadmap,
-                mapStyle: _mapStyle,
-                interactive: true,
-                onTap: (coord) =>
-                    _scaffoldKey.currentState.showSnackBar(SnackBar(
-                  content: Text(coord?.toString()),
-                  duration: const Duration(seconds: 2),
-                )),
-                mobilePreferences: const MobileMapPreferences(
-                  trafficEnabled: true,
-                  zoomControlsEnabled: false,
-                ),
-                webPreferences: WebMapPreferences(
-                  fullscreenControl: true,
-                  zoomControl: true,
-                ),
-              ),
-            ),
-            Positioned(
-              top: 16,
-              left: 16,
-              child: FloatingActionButton(
-                child: Icon(Icons.person_pin_circle),
-                onPressed: () {
-                  final bounds = GeoCoordBounds(
-                    northeast: GeoCoord(34.021307, -117.432317),
-                    southwest: GeoCoord(33.835745, -117.712785),
-                  );
-                  GoogleMap.of(_key).moveCameraBounds(bounds);
-                  GoogleMap.of(_key).addMarkerRaw(
-                    GeoCoord(
-                      (bounds.northeast.latitude + bounds.southwest.latitude) /
-                          2,
-                      (bounds.northeast.longitude +
-                              bounds.southwest.longitude) /
-                          2,
-                    ),
-                    onTap: (markerId) async {
-                      await showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          content: Text(
-                            'This dialog was opened by tapping on the marker!\n'
-                            'Marker ID is $markerId',
-                          ),
-                          actions: <Widget>[
-                            FlatButton(
-                              onPressed: Navigator.of(context).pop,
-                              child: Text('CLOSE'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-            Positioned(
-              top: 16,
-              right: kIsWeb ? 60 : 16,
-              child: FloatingActionButton(
-                onPressed: () {
-                  if (_darkMapStyle) {
-                    GoogleMap.of(_key).changeMapStyle(null);
-                    _mapStyle = null;
-                  } else {
-                    GoogleMap.of(_key).changeMapStyle(darkMapStyle);
-                    _mapStyle = darkMapStyle;
-                  }
+    appBar: AppBar(),
+  );
 
-                  setState(() => _darkMapStyle = !_darkMapStyle);
-                },
-                backgroundColor: _darkMapStyle ? Colors.black : Colors.white,
-                child: Icon(
-                  _darkMapStyle ? Icons.wb_sunny : Icons.brightness_3,
-                  color: _darkMapStyle ? Colors.white : Colors.black,
-                ),
-              ),
-            ),
-            Positioned(
-              left: 16,
-              right: kIsWeb ? 60 : 16,
-              bottom: 16,
-              child: Row(
-                children: <Widget>[
-                  LayoutBuilder(
-                    builder: (context, constraints) =>
-                        constraints.maxWidth < 1000
-                            ? Row(children: _buildClearButtons())
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: _buildClearButtons(),
-                              ),
-                  ),
-                  Spacer(),
-                  ..._buildAddButtons(),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
+
+  // final _scaffoldKey = GlobalKey<ScaffoldState>();
+  // final _key = GlobalKey<GoogleMapStateBase>();
+  // bool _polygonAdded = false;
+  // bool _darkMapStyle = false;
+  // String _mapStyle;
+
+  // List<Widget> _buildClearButtons() => [
+  //       RaisedButton.icon(
+  //         color: Colors.red,
+  //         textColor: Colors.white,
+  //         icon: Icon(Icons.bubble_chart),
+  //         label: Text('CLEAR POLYGONS'),
+  //         onPressed: () {
+  //           GoogleMap.of(_key).clearPolygons();
+  //           setState(() => _polygonAdded = false);
+  //         },
+  //       ),
+  //       const SizedBox(width: 16),
+  //       RaisedButton.icon(
+  //         color: Colors.red,
+  //         textColor: Colors.white,
+  //         icon: Icon(Icons.pin_drop),
+  //         label: Text('CLEAR MARKERS'),
+  //         onPressed: () {
+  //           GoogleMap.of(_key).clearMarkers();
+  //         },
+  //       ),
+  //       const SizedBox(width: 16),
+  //       RaisedButton.icon(
+  //         color: Colors.red,
+  //         textColor: Colors.white,
+  //         icon: Icon(Icons.directions),
+  //         label: Text('CLEAR DIRECTIONS'),
+  //         onPressed: () {
+  //           GoogleMap.of(_key).clearDirections();
+  //         },
+  //       ),
+  //     ];
+
+  // List<Widget> _buildAddButtons() => [
+  //       FloatingActionButton(
+  //         child: Icon(_polygonAdded ? Icons.edit : Icons.bubble_chart),
+  //         backgroundColor: _polygonAdded ? Colors.orange : null,
+  //         onPressed: () {
+  //           if (!_polygonAdded) {
+  //             GoogleMap.of(_key).addPolygon(
+  //               '1',
+  //               polygon,
+  //               onTap: (polygonId) async {
+  //                 await showDialog(
+  //                   context: context,
+  //                   builder: (context) => AlertDialog(
+  //                     content: Text(
+  //                       'This dialog was opened by tapping on the polygon!\n'
+  //                       'Polygon ID is $polygonId',
+  //                     ),
+  //                     actions: <Widget>[
+  //                       FlatButton(
+  //                         onPressed: Navigator.of(context).pop,
+  //                         child: Text('CLOSE'),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 );
+  //               },
+  //             );
+  //           } else {
+  //             GoogleMap.of(_key).editPolygon(
+  //               '1',
+  //               polygon,
+  //               fillColor: Colors.purple,
+  //               strokeColor: Colors.purple,
+  //             );
+  //           }
+
+  //           setState(() => _polygonAdded = true);
+  //         },
+  //       ),
+  //       const SizedBox(width: 16),
+  //       FloatingActionButton(
+  //         child: Icon(Icons.pin_drop),
+  //         onPressed: () {
+  //           GoogleMap.of(_key).addMarkerRaw(
+  //             GeoCoord(33.875513, -117.550257),
+  //             info: 'test info',
+  //             onInfoWindowTap: () async {
+  //               await showDialog(
+  //                 context: context,
+  //                 builder: (context) => AlertDialog(
+  //                   content: Text(
+  //                       'This dialog was opened by tapping on the InfoWindow!'),
+  //                   actions: <Widget>[
+  //                     FlatButton(
+  //                       onPressed: Navigator.of(context).pop,
+  //                       child: Text('CLOSE'),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               );
+  //             },
+  //           );
+  //           GoogleMap.of(_key).addMarkerRaw(
+  //             GeoCoord(33.775513, -117.450257),
+  //             icon: 'assets/images/map-marker-warehouse.png',
+  //             info: contentString,
+  //           );
+  //         },
+  //       ),
+  //       const SizedBox(width: 16),
+  //       FloatingActionButton(
+  //         child: Icon(Icons.directions),
+  //         onPressed: () {
+  //           GoogleMap.of(_key).addDirection(
+  //             'San Francisco, CA',
+  //             'San Jose, CA',
+  //             startLabel: '1',
+  //             startInfo: 'San Francisco, CA',
+  //             endIcon: 'assets/images/map-marker-warehouse.png',
+  //             endInfo: 'San Jose, CA',
+  //           );
+  //         },
+  //       ),
+  //     ];
+
+  // @override
+  // Widget build(BuildContext context) => Scaffold(
+  //       key: _scaffoldKey,
+  //       appBar: AppBar(
+  //         title: Text('Google Map'),
+  //       ),
+  //       body: Stack(
+  //         children: <Widget>[
+  //           Positioned.fill(
+  //             child: GoogleMap(
+  //               key: _key,
+  //               markers: {
+  //                 Marker(
+  //                   GeoCoord(34.0469058, -118.3503948),
+  //                 ),
+  //               },
+  //               initialZoom: 12,
+  //               initialPosition:
+  //                   GeoCoord(34.0469058, -118.3503948), // Los Angeles, CA
+  //               mapType: MapType.roadmap,
+  //               mapStyle: _mapStyle,
+  //               interactive: true,
+  //               onTap: (coord) =>
+  //                   _scaffoldKey.currentState.showSnackBar(SnackBar(
+  //                 content: Text(coord?.toString()),
+  //                 duration: const Duration(seconds: 2),
+  //               )),
+  //               mobilePreferences: const MobileMapPreferences(
+  //                 trafficEnabled: true,
+  //                 zoomControlsEnabled: false,
+  //               ),
+  //               webPreferences: WebMapPreferences(
+  //                 fullscreenControl: true,
+  //                 zoomControl: true,
+  //               ),
+  //             ),
+  //           ),
+  //           Positioned(
+  //             top: 16,
+  //             left: 16,
+  //             child: FloatingActionButton(
+  //               child: Icon(Icons.person_pin_circle),
+  //               onPressed: () {
+  //                 final bounds = GeoCoordBounds(
+  //                   northeast: GeoCoord(34.021307, -117.432317),
+  //                   southwest: GeoCoord(33.835745, -117.712785),
+  //                 );
+  //                 GoogleMap.of(_key).moveCameraBounds(bounds);
+  //                 GoogleMap.of(_key).addMarkerRaw(
+  //                   GeoCoord(
+  //                     (bounds.northeast.latitude + bounds.southwest.latitude) /
+  //                         2,
+  //                     (bounds.northeast.longitude +
+  //                             bounds.southwest.longitude) /
+  //                         2,
+  //                   ),
+  //                   onTap: (markerId) async {
+  //                     await showDialog(
+  //                       context: context,
+  //                       builder: (context) => AlertDialog(
+  //                         content: Text(
+  //                           'This dialog was opened by tapping on the marker!\n'
+  //                           'Marker ID is $markerId',
+  //                         ),
+  //                         actions: <Widget>[
+  //                           FlatButton(
+  //                             onPressed: Navigator.of(context).pop,
+  //                             child: Text('CLOSE'),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     );
+  //                   },
+  //                 );
+  //               },
+  //             ),
+  //           ),
+  //           Positioned(
+  //             top: 16,
+  //             right: kIsWeb ? 60 : 16,
+  //             child: FloatingActionButton(
+  //               onPressed: () {
+  //                 if (_darkMapStyle) {
+  //                   GoogleMap.of(_key).changeMapStyle(null);
+  //                   _mapStyle = null;
+  //                 } else {
+  //                   GoogleMap.of(_key).changeMapStyle(darkMapStyle);
+  //                   _mapStyle = darkMapStyle;
+  //                 }
+
+  //                 setState(() => _darkMapStyle = !_darkMapStyle);
+  //               },
+  //               backgroundColor: _darkMapStyle ? Colors.black : Colors.white,
+  //               child: Icon(
+  //                 _darkMapStyle ? Icons.wb_sunny : Icons.brightness_3,
+  //                 color: _darkMapStyle ? Colors.white : Colors.black,
+  //               ),
+  //             ),
+  //           ),
+  //           Positioned(
+  //             left: 16,
+  //             right: kIsWeb ? 60 : 16,
+  //             bottom: 16,
+  //             child: Row(
+  //               children: <Widget>[
+  //                 LayoutBuilder(
+  //                   builder: (context, constraints) =>
+  //                       constraints.maxWidth < 1000
+  //                           ? Row(children: _buildClearButtons())
+  //                           : Column(
+  //                               crossAxisAlignment: CrossAxisAlignment.start,
+  //                               children: _buildClearButtons(),
+  //                             ),
+  //                 ),
+  //                 Spacer(),
+  //                 ..._buildAddButtons(),
+  //               ],
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     );
 }
 
 const darkMapStyle = r'''
